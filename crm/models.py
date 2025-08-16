@@ -1,44 +1,25 @@
+# crm/models.py
 from django.db import models
-import graphene
-from graphene_django import DjangoObjectType
-from .models import Customer, Product, Order
-from django.db import transaction
-import re
 
-# GraphQL types
-class CustomerType(DjangoObjectType):
-    class Meta:
-        model = Customer
+class Customer(models.Model):
+    name = models.CharField(max_length=255)
+    email = models.EmailField(unique=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
 
-class ProductType(DjangoObjectType):
-    class Meta:
-        model = Product
+    def __str__(self):
+        return self.name
 
-class OrderType(DjangoObjectType):
-    class Meta:
-        model = Order
+class Product(models.Model):
+    name = models.CharField(max_length=255)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
 
-# Create a single customer
-class CreateCustomer(graphene.Mutation):
-    class Arguments:
-        name = graphene.String(required=True)
-        email = graphene.String(required=True)
-        phone = graphene.String()
+    def __str__(self):
+        return self.name
 
-    customer = graphene.Field(CustomerType)
-    message = graphene.String()
+class Order(models.Model):
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
 
-    def mutate(self, info, name, email, phone=None):
-        # Validate email uniqueness
-        if Customer.objects.filter(email=email).exists():
-            return CreateCustomer(customer=None, message="Email already exists")
-        
-        # Validate phone
-        if phone:
-            pattern = r'^(\+\d{10,15}|\d{3}-\d{3}-\d{4})$'
-            if not re.match(pattern, phone):
-                return CreateCustomer(customer=None, message="Invalid phone format")
-        
-        customer = Customer(name=name, email=email, phone=phone)
-        customer.save()
-        return CreateCustomer(customer=customer, message="Customer created successfully")
+    def __str__(self):
+        return f"Order #{self.pk} by {self.customer}"
