@@ -1,6 +1,3 @@
-import graphene
+# schema.py (root) - re-export the main schema
+from graphql_crm.schema import schema
 
-class Query(graphene.ObjectType):
-    hello = graphene.String(default_value="Hello, GraphQL!")
-
-schema = graphene.Schema(query=Query)
